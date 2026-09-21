@@ -82,7 +82,7 @@ const viewer = new Viewer({
     position: { yaw: '178.4deg', pitch: '-27.7deg' },
     image: 'icons/torus.webp', size: { width: 45, height: 48 },
     tooltip: 'En trono de la perro',
-  }] }]],
+  }].map(m => ({ ...m, tooltip: { content: m.tooltip, trigger: matchMedia('(hover: none)').matches ? 'click' : 'hover' } })) }]],
 });
 
 viewer.addEventListener('click', ({ data }) => {
