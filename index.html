@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>360 Photo</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5/index.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin@5/index.css">
-<style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin@5/index.css"><style>
   html, body { margin: 0; height: 100%; background: #000; }
   #viewer { width: 100%; height: 100%; }
   #banner {
@@ -74,11 +73,10 @@ const cards = {
 // markers that open a link in a new window
 const links = {
   spot1: 'https://www.flightradar24.com/42.69,-83.23/6',
+  spot7: 'https://www.google.com/maps?sca_esv=3e5594fd685e5dfa&biw=1567&bih=997&output=search&q=delmonico+steak+las+vegas&source=lnms&fbs=ABfTbFVyMZGZf1hfvX9uKjN_-G8c4u0nXx4bEIpwm1lnNH832f01nJrJQBh6ZiQ_SpYVjD03UDbHckLqQQtU4j8UX1eWVop2gQhTXRceTvyS_cXev2noIz2LqKyR3L1mTa0p7Oim7b4G8TzD-dztddR2LyopFd-c-pYeYB-0g9lnaQh0B9betVPbsOebU3DzqrchNHv4Mnet73i0fxc006Ic5CIn5VjHtA&entry=mc&ved=1t:200715&ictx=111',
 };
 
-const viewer = new Viewer({
-  container: 'viewer', panorama: 'photo.jpg', defaultZoomLvl: 30, navbar: false,
-  plugins: [[MarkersPlugin, { markers: [{
+const livingMarkers = [{
     id: 'spot1',
     position: { yaw: '282.7deg', pitch: '-4.1deg' },
     image: 'icons/torus.webp', size: { width: 45, height: 48 },
@@ -113,7 +111,21 @@ const viewer = new Viewer({
     position: { yaw: '43.1deg', pitch: '-4.6deg' },
     image: 'icons/coins.webp', size: { width: 45, height: 48 },
     tooltip: 'Chief Asador',
-  }].map(m => ({ ...m, tooltip: { content: m.tooltip, trigger: !cards[m.id] && !links[m.id] && matchMedia('(hover: none)').matches ? 'click' : 'hover' } })) }]],
+  }].map(m => ({ ...m, tooltip: { content: m.tooltip, trigger: !cards[m.id] && !links[m.id] && matchMedia('(hover: none)').matches ? 'click' : 'hover' } }));
+
+// direction arrows, placed for now with no click action
+const arrowSvg = '<svg viewBox="0 0 100 100" width="27" height="27"><circle cx="50" cy="50" r="44" fill="#ffffff"/><path d="M28 58 L50 36 L72 58" fill="none" stroke="#111111" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const arrowMarkers = [
+  { id: 'arrow1', position: { yaw: '283.3deg', pitch: '-15.4deg' } },
+  { id: 'arrow2', position: { yaw: '208.3deg', pitch: '-18.0deg' } },
+  { id: 'arrow3', position: { yaw: '3.8deg', pitch: '-11.2deg' } },
+  { id: 'arrow4', position: { yaw: '251.3deg', pitch: '-14.3deg' } },
+  { id: 'arrow5', position: { yaw: '171.8deg', pitch: '1.9deg' } },
+].map(m => ({ ...m, html: arrowSvg, size: { width: 27, height: 27 } }));
+
+const viewer = new Viewer({
+  container: 'viewer', panorama: 'photo.jpg', defaultZoomLvl: 30, navbar: false,
+  plugins: [[MarkersPlugin, { markers: [...livingMarkers, ...arrowMarkers] }]],
 });
 
 viewer.addEventListener('click', ({ data }) => {
