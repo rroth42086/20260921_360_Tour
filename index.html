@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>360 Photo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5/index.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; }
+  #viewer { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="viewer"></div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169/build/three.module.js",
+  "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5/index.module.js"
+} }
+</script>
+<script type="module">
+import { Viewer } from '@photo-sphere-viewer/core';
+
+new Viewer({ container: 'viewer', panorama: 'photo.jpg', defaultZoomLvl: 30 });
+</script>
+</body>
+</html>
