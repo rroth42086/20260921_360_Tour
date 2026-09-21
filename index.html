@@ -51,7 +51,7 @@ import { Viewer } from '@photo-sphere-viewer/core';
 import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
 
 const viewer = new Viewer({
-  container: 'viewer', panorama: 'photo.jpg', defaultZoomLvl: 30,
+  container: 'viewer', panorama: 'photo.jpg', defaultZoomLvl: 30, navbar: false,
   plugins: [[MarkersPlugin, { markers: [{
     id: 'spot1',
     position: { yaw: '282.7deg', pitch: '-4.1deg' },
@@ -70,18 +70,23 @@ const viewer = new Viewer({
   }, {
     id: 'spot4',
     position: { yaw: '261.0deg', pitch: '-42.1deg' },
-    image: 'icons/torus.webp', size: { width: 45, height: 48 },
+    image: 'icons/cube.webp', size: { width: 45, height: 48 },
     tooltip: 'El trono de la reina',
   }, {
     id: 'spot5',
     position: { yaw: '109.7deg', pitch: '-61.5deg' },
-    image: 'icons/torus.webp', size: { width: 45, height: 48 },
+    image: 'icons/pentagon.webp', size: { width: 45, height: 48 },
     tooltip: 'El trono de la Rey',
   }, {
     id: 'spot6',
     position: { yaw: '178.4deg', pitch: '-27.7deg' },
     image: 'icons/torus.webp', size: { width: 45, height: 48 },
     tooltip: 'En trono de la perro',
+  }, {
+    id: 'spot7',
+    position: { yaw: '43.1deg', pitch: '-4.6deg' },
+    image: 'icons/coins.webp', size: { width: 45, height: 48 },
+    tooltip: 'Chief Asador',
   }].map(m => ({ ...m, tooltip: { content: m.tooltip, trigger: matchMedia('(hover: none)').matches ? 'click' : 'hover' } })) }]],
 });
 
