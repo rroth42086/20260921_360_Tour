@@ -5,9 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>360 Photo</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin@5/index.css">
 <style>
   html, body { margin: 0; height: 100%; background: #000; }
   #viewer { width: 100%; height: 100%; }
+  .psv-tooltip, .psv-tooltip .psv-tooltip-content {
+    color: #ffffff;
+    font-family: 'Formular', system-ui, sans-serif;
+    font-weight: 400;
+    font-size: 12pt;
+    text-shadow: none;
+  }
+  .psv-tooltip .psv-tooltip-content { padding: 0.5em; }
+  .psv-tooltip { background: #000000; border-radius: 2px; box-shadow: none; }
+  .psv-tooltip--top-left .psv-tooltip-arrow, .psv-tooltip--top-center .psv-tooltip-arrow, .psv-tooltip--top-right .psv-tooltip-arrow { border-top-color: #000000; }
+  .psv-tooltip--bottom-left .psv-tooltip-arrow, .psv-tooltip--bottom-center .psv-tooltip-arrow, .psv-tooltip--bottom-right .psv-tooltip-arrow { border-bottom-color: #000000; }
+  .psv-tooltip--left-top .psv-tooltip-arrow, .psv-tooltip--center-left .psv-tooltip-arrow, .psv-tooltip--left-bottom .psv-tooltip-arrow { border-left-color: #000000; }
+  .psv-tooltip--right-top .psv-tooltip-arrow, .psv-tooltip--center-right .psv-tooltip-arrow, .psv-tooltip--right-bottom .psv-tooltip-arrow { border-right-color: #000000; }
 </style>
 </head>
 <body>
@@ -15,13 +29,53 @@
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.169/build/three.module.js",
-  "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5/index.module.js"
+  "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5/index.module.js",
+  "@photo-sphere-viewer/markers-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin@5/index.module.js"
 } }
 </script>
 <script type="module">
 import { Viewer } from '@photo-sphere-viewer/core';
+import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
 
-new Viewer({ container: 'viewer', panorama: 'photo.jpg', defaultZoomLvl: 30 });
+const viewer = new Viewer({
+  container: 'viewer', panorama: 'photo.jpg', defaultZoomLvl: 30,
+  plugins: [[MarkersPlugin, { markers: [{
+    id: 'spot1',
+    position: { yaw: '282.7deg', pitch: '-4.1deg' },
+    image: 'note.png', size: { width: 45, height: 48 },
+    tooltip: 'Hello!',
+  }, {
+    id: 'spot2',
+    position: { yaw: '223.6deg', pitch: '2.3deg' },
+    image: 'note.png', size: { width: 45, height: 48 },
+    tooltip: 'Hola Betcita!',
+  }, {
+    id: 'spot3',
+    position: { yaw: '318.0deg', pitch: '-24.8deg' },
+    image: 'note.png', size: { width: 45, height: 48 },
+    tooltip: 'Get back to work!',
+  }, {
+    id: 'spot4',
+    position: { yaw: '261.0deg', pitch: '-42.1deg' },
+    image: 'note.png', size: { width: 45, height: 48 },
+    tooltip: 'El trono de la reina',
+  }, {
+    id: 'spot5',
+    position: { yaw: '109.7deg', pitch: '-61.5deg' },
+    image: 'note.png', size: { width: 45, height: 48 },
+    tooltip: 'El trono de la Rey',
+  }, {
+    id: 'spot6',
+    position: { yaw: '178.4deg', pitch: '-27.7deg' },
+    image: 'note.png', size: { width: 45, height: 48 },
+    tooltip: 'En trono de la perro',
+  }] }]],
+});
+
+viewer.addEventListener('click', ({ data }) => {
+  const d = r => (r * 180 / Math.PI).toFixed(1) + 'deg';
+  console.log(`{ yaw: '${d(data.yaw)}', pitch: '${d(data.pitch)}' }`);
+});
 </script>
 </body>
 </html>
