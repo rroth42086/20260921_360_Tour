@@ -34,11 +34,26 @@
   .psv-tooltip--bottom-left .psv-tooltip-arrow, .psv-tooltip--bottom-center .psv-tooltip-arrow, .psv-tooltip--bottom-right .psv-tooltip-arrow { border-bottom-color: #000000; }
   .psv-tooltip--left-top .psv-tooltip-arrow, .psv-tooltip--center-left .psv-tooltip-arrow, .psv-tooltip--left-bottom .psv-tooltip-arrow { border-left-color: #000000; }
   .psv-tooltip--right-top .psv-tooltip-arrow, .psv-tooltip--center-right .psv-tooltip-arrow, .psv-tooltip--right-bottom .psv-tooltip-arrow { border-right-color: #000000; }
+  #card { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6); }
+  #card.open { display: flex; }
+  #card .box { position: relative; width: min(92vw, 720px); background: #000000; border-radius: 2px; color: #ffffff; font-family: 'Formular', system-ui, sans-serif; }
+  #card .video { aspect-ratio: 16 / 9; width: 100%; }
+  #card iframe { display: block; width: 100%; height: 100%; border: 0; }
+  #card .text { padding: 0.75em 1em 1em; }
+  #card h2 { margin: 0 0 0.4em; font-size: 14pt; font-weight: 700; }
+  #card p { margin: 0; font-size: 12pt; font-weight: 400; line-height: 1.4; }
+  #card p:empty { display: none; }
+  #card .close { position: absolute; top: -2.4em; right: 0; padding: 0.4em 0.6em; border: 0; background: none; color: #ffffff; font: 400 16pt system-ui; cursor: pointer; }
 </style>
 </head>
 <body>
 <div id="viewer"></div>
 <div id="banner">UNDER CONSTRUCTION</div>
+<div id="card"><div class="box">
+  <button class="close" aria-label="Close">✕</button>
+  <div class="video"></div>
+  <div class="text"><h2></h2><p></p></div>
+</div></div>
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.169/build/three.module.js",
@@ -49,6 +64,17 @@
 <script type="module">
 import { Viewer } from '@photo-sphere-viewer/core';
 import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
+
+// markers that open a video card instead of only a tooltip
+const cards = {
+  spot2: { vimeo: '1162921442', title: 'Ron Roth - Demo Reel 2026', description: 'Chief Videographer on locations.' },
+  spot6: { vimeo: '1184466863', title: 'Scaffold Gumroad Cover', description: '' },
+};
+
+// markers that open a link in a new window
+const links = {
+  spot1: 'https://www.flightradar24.com/42.69,-83.23/6',
+};
 
 const viewer = new Viewer({
   container: 'viewer', panorama: 'photo.jpg', defaultZoomLvl: 30, navbar: false,
@@ -65,7 +91,7 @@ const viewer = new Viewer({
   }, {
     id: 'spot3',
     position: { yaw: '318.0deg', pitch: '-24.8deg' },
-    image: 'icons/torus.webp', size: { width: 45, height: 48 },
+    image: 'icons/cylinder.webp', size: { width: 45, height: 48 },
     tooltip: 'Get back to work!',
   }, {
     id: 'spot4',
@@ -87,13 +113,36 @@ const viewer = new Viewer({
     position: { yaw: '43.1deg', pitch: '-4.6deg' },
     image: 'icons/coins.webp', size: { width: 45, height: 48 },
     tooltip: 'Chief Asador',
-  }].map(m => ({ ...m, tooltip: { content: m.tooltip, trigger: matchMedia('(hover: none)').matches ? 'click' : 'hover' } })) }]],
+  }].map(m => ({ ...m, tooltip: { content: m.tooltip, trigger: !cards[m.id] && !links[m.id] && matchMedia('(hover: none)').matches ? 'click' : 'hover' } })) }]],
 });
 
 viewer.addEventListener('click', ({ data }) => {
   const d = r => (r * 180 / Math.PI).toFixed(1) + 'deg';
   console.log(`{ yaw: '${d(data.yaw)}', pitch: '${d(data.pitch)}' }`);
 });
+
+const card = document.getElementById('card');
+const openCard = c => {
+  const frame = document.createElement('iframe');
+  frame.src = `https://player.vimeo.com/video/${c.vimeo}?title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&app_id=58479`;
+  frame.allow = 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share';
+  frame.referrerPolicy = 'strict-origin-when-cross-origin';
+  frame.title = c.title;
+  card.querySelector('.video').replaceChildren(frame);
+  card.querySelector('h2').textContent = c.title;
+  card.querySelector('p').textContent = c.description;
+  card.classList.add('open');
+};
+const closeCard = () => {
+  card.classList.remove('open');
+  card.querySelector('.video').replaceChildren();   // removing the iframe stops playback
+};
+viewer.getPlugin(MarkersPlugin).addEventListener('select-marker', ({ marker }) => {
+  if (cards[marker.id]) openCard(cards[marker.id]);
+  if (links[marker.id]) window.open(links[marker.id], '_blank', 'noopener,noreferrer');
+});
+card.addEventListener('click', e => { if (e.target === card || e.target.classList.contains('close')) closeCard(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCard(); });
 
 // banner timeline, in frames
 const FPS = 30, DROP = 9, STAGGER = 60, HOLD = 150, FADE = 30;
