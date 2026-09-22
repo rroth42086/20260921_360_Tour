@@ -36,20 +36,31 @@
   /* rich previews (thumbnail/OG image + title + description: video markers and link previews
      like the White Paper and Intelligent Systems cards) get a wider box than the plain-text
      tooltip default (200px) — sized so the White Paper title's two lines ("...Trusted in" /
-     "Safety-Critical Applications") each fit without re-wrapping; every other rich-preview
-     title is short enough to stay on one line at this width, and none should exceed it */
-  .psv-tooltip:has(.psv-tooltip-content > img) { max-width: 340px; }
+     "Safety-Critical Applications") each fit without re-wrapping (first line measures 333.5px
+     in Formular 12pt, + 22.4px padding); every other rich-preview title is short enough to
+     stay on one line at this width, and none should exceed it */
+  .psv-tooltip:has(.psv-tooltip-content > img) { max-width: 360px; }
   /* video preview thumbnail bleeds to the tooltip's edges rather than sitting inset by the
-     content div's own padding (0.7em, matched here so the math cancels out exactly) */
-  .psv-tooltip-content img { display: block; width: calc(100% + 1.4em); margin: -0.7em -0.7em 0.4em; border-radius: 2px 2px 0 0; }
-  /* content-type label (e.g. "White Paper") above the thumbnail — sits in the normal padded
+     content div's own padding (0.7em, matched here so the math cancels out exactly). bottom
+     margin is set so the visible gap from thumbnail to title cap height (~14.5px) matches the
+     gap from title baseline to description cap height */
+  .psv-tooltip-content img { display: block; width: calc(100% + 1.4em); margin: -0.7em -0.7em 0.62em; border-radius: 2px 2px 0 0; }
+  /* content-type label (<h2>, e.g. "White Paper") above the thumbnail — sits in the normal padded
      flow, so the image below it keeps its left/right/bottom bleed but not its top bleed,
      or it would slide up underneath this label instead of sitting below it */
-  .psv-tooltip-content .tt-kind { display: block; margin: 0 0 0.35em; font: 700 8pt 'Formular', system-ui, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+  .psv-tooltip-content h2 { display: block; margin: 0.4em 0 0.75em; font: 700 8pt 'Formular', system-ui, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: #ffffff; }
   /* arrows have no tooltip/click yet, so PSV's default marker cursor ("move") shows instead
      of "pointer" — override it so they still read as clickable on hover */
   .psv-marker.tour-arrow { cursor: pointer; }
-  .psv-tooltip-content .tt-kind + img { margin-top: 0; }
+  .psv-tooltip-content h2 + img { margin-top: 0; }
+  /* hoverable tooltips (see the script): PSV sets pointer-events: none inline, overridden here so
+     the pointer can move onto the tooltip without it closing */
+  .psv-tooltip--live { pointer-events: auto !important; cursor: pointer; }
+  .psv-tooltip-content { position: relative; }
+  /* muted Vimeo preview laid exactly over the video thumbnail, faded in once loaded so the
+     thumbnail shows until then; clicks pass through to the tooltip (which opens the full card) */
+  .psv-tooltip-content .tt-video { position: absolute; border: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; border-radius: 2px 2px 0 0; }
+  .psv-tooltip-content .tt-video.ready { opacity: 1; }
   .psv-tooltip { background: #000000; border-radius: 2px; box-shadow: none; }
   .psv-tooltip--top-left .psv-tooltip-arrow, .psv-tooltip--top-center .psv-tooltip-arrow, .psv-tooltip--top-right .psv-tooltip-arrow { border-top-color: #000000; }
   .psv-tooltip--bottom-left .psv-tooltip-arrow, .psv-tooltip--bottom-center .psv-tooltip-arrow, .psv-tooltip--bottom-right .psv-tooltip-arrow { border-bottom-color: #000000; }
@@ -145,12 +156,12 @@ const lorem = '<h1>Lorem Ipsum Sit Amet</h1><p>Lorem ipsum dolor sit amet consec
 function previewFor(id) {
   if (cards[id]) {
     const c = cards[id];
-    return `<img src="${c.thumbnail}" alt=""><h1>${c.title}</h1>${c.description ? `<p>${c.description}</p>` : ''}`;
+    return `<h2>Video</h2><img src="${c.thumbnail}" alt=""><h1>${c.title}</h1>${c.description ? `<p>${c.description}</p>` : ''}`;
   }
   if (links[id]) {
     const l = links[id];
     if (l.preview) {
-      const kind = l.preview.kind ? `<span class="tt-kind">${l.preview.kind}</span>` : '';
+      const kind = l.preview.kind ? `<h2>${l.preview.kind}</h2>` : '';
       return `${kind}<img src="${l.preview.image}" alt=""><h1>${l.preview.title}</h1><p>${l.preview.description}</p>`;
     }
     const site = l.site || new URL(l.url).hostname.replace(/^www\./, '');
@@ -230,6 +241,53 @@ viewer.getPlugin(MarkersPlugin).addEventListener('select-marker', ({ marker }) =
   if (links[marker.id]) window.open(links[marker.id].url, '_blank', 'noopener,noreferrer');
 });
 card.addEventListener('click', e => { if (e.target === card || e.target.classList.contains('close')) closeCard(); });
+
+// Hoverable tooltips. PSV hides a hover tooltip the instant the pointer leaves its marker, and
+// gives it pointer-events: none, so the pointer can never reach it. Here each hover marker's
+// hideTooltip is deferred by a short grace period, cancelled if the pointer lands on the
+// tooltip (or back on the marker) in the meantime; leaving the tooltip hides it again. Clicking
+// the tooltip does the same as clicking its marker. Video tooltips also play a muted, looping
+// Vimeo preview over their thumbnail while open — the iframe is only created on show and removed
+// on hide, so nothing loads until someone actually hovers.
+const HIDE_GRACE = 300;
+const markersPlugin = viewer.getPlugin(MarkersPlugin);
+const selectMarker = id => {
+  if (cards[id]) openCard(cards[id]);
+  if (links[id]) window.open(links[id].url, '_blank', 'noopener,noreferrer');
+};
+// markers only exist once the panorama has loaded, hence waiting for 'ready'
+viewer.addEventListener('ready', () => livingMarkers.filter(m => m.tooltip.trigger === 'hover').forEach(({ id }) => {
+  const marker = markersPlugin.getMarker(id);
+  const show = marker.showTooltip.bind(marker), hide = marker.hideTooltip.bind(marker);
+  let timer = null;
+  const hideNow = () => { clearTimeout(timer); timer = null; hide(); };
+  marker.showTooltip = (...args) => {
+    clearTimeout(timer); timer = null;
+    const isNew = !marker.tooltip;
+    show(...args);
+    const tip = marker.tooltip;
+    if (!isNew || !tip) return;
+    tip.container.classList.add('psv-tooltip--live');
+    tip.container.addEventListener('mouseenter', () => { clearTimeout(timer); timer = null; });
+    tip.container.addEventListener('mouseleave', () => { if (markersPlugin.state.hoveringMarker !== marker) hideNow(); });
+    tip.container.addEventListener('click', () => { hideNow(); selectMarker(id); });
+    if (cards[id]) {
+      const img = tip.content.querySelector('img');
+      const frame = document.createElement('iframe');
+      frame.className = 'tt-video';
+      frame.src = `https://player.vimeo.com/video/${cards[id].vimeo}?autoplay=1&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0&badge=0&dnt=1`;
+      frame.allow = 'autoplay';
+      frame.addEventListener('load', () => frame.classList.add('ready'));
+      const place = () => Object.assign(frame.style, { top: `${img.offsetTop}px`, left: `${img.offsetLeft}px`, width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px` });
+      if (img.complete) place(); else img.addEventListener('load', place);
+      img.after(frame);
+    }
+  };
+  marker.hideTooltip = () => {
+    if (!marker.tooltip || timer) return;
+    timer = setTimeout(hideNow, HIDE_GRACE);
+  };
+}), { once: true });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCard(); });
 
 // Map/legend inset — WIREFRAME ONLY. There's only one real photo on this page, so "Tech Theater" is
