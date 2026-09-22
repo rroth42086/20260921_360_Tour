@@ -27,7 +27,20 @@
     font-size: 12pt;
     text-shadow: none;
   }
-  .psv-tooltip .psv-tooltip-content { padding: 0.5em; }
+  .psv-tooltip .psv-tooltip-content { padding: 0.7em; }
+  /* header keeps the tooltip's existing look (Formular 400/12pt/white); body is
+     deliberately smaller and dimmer so the two read as a clear hierarchy, not two
+     lines of the same weight */
+  .psv-tooltip-content h1 { margin: 0 0 0.3em; font: 400 12pt 'Formular', system-ui, sans-serif; color: #ffffff; }
+  .psv-tooltip-content p { margin: 0; font: 400 10pt 'Formular', system-ui, sans-serif; color: rgba(255, 255, 255, 0.65); line-height: 1.35; }
+  /* video preview thumbnail bleeds to the tooltip's edges rather than sitting inset by the
+     content div's own padding (0.7em, matched here so the math cancels out exactly) */
+  .psv-tooltip-content img { display: block; width: calc(100% + 1.4em); margin: -0.7em -0.7em 0.4em; border-radius: 2px 2px 0 0; }
+  /* content-type label (e.g. "White Paper") above the thumbnail — sits in the normal padded
+     flow, so the image below it keeps its left/right/bottom bleed but not its top bleed,
+     or it would slide up underneath this label instead of sitting below it */
+  .psv-tooltip-content .tt-kind { display: block; margin: 0 0 0.35em; font: 700 8pt 'Formular', system-ui, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+  .psv-tooltip-content .tt-kind + img { margin-top: 0; }
   .psv-tooltip { background: #000000; border-radius: 2px; box-shadow: none; }
   .psv-tooltip--top-left .psv-tooltip-arrow, .psv-tooltip--top-center .psv-tooltip-arrow, .psv-tooltip--top-right .psv-tooltip-arrow { border-top-color: #000000; }
   .psv-tooltip--bottom-left .psv-tooltip-arrow, .psv-tooltip--bottom-center .psv-tooltip-arrow, .psv-tooltip--bottom-right .psv-tooltip-arrow { border-bottom-color: #000000; }
@@ -71,63 +84,102 @@
 import { Viewer } from '@photo-sphere-viewer/core';
 import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
 
-// markers that open a video card instead of only a tooltip
+// markers that open a video card instead of only a tooltip. thumbnail is fetched once via
+// Vimeo's oEmbed endpoint (vimeo.com/api/oembed.json?url=...) and hardcoded here, same as
+// every other hand-placed value on this page — no runtime API call needed to show it.
 const cards = {
-  spot2: { vimeo: '1162921442', title: 'Ron Roth - Demo Reel 2026', description: 'Chief Videographer on locations.' },
-  spot6: { vimeo: '1184466863', title: 'Scaffold Gumroad Cover', description: '' },
+  spot1: {
+    vimeo: '1223937006', title: 'Technology Adoption in India',
+    description: 'India’s automotive market is embracing AI, ADAS and next-generation user experiences while balancing affordability and local customer needs.',
+    thumbnail: 'https://i.vimeocdn.com/video/2201232622-35eaaa6ad5493726d2cf367c7a0d271a206c68cf3cec6945a43559fa0538afc8-d_295x166?region=us',
+  },
+  spot6: {
+    vimeo: '1206084521', title: 'Moving at the Speed of China',
+    description: "China's automotive market is accelerating electrification, ADAS adoption and global expansion, creating new opportunities for OEMs and technology partners.",
+    thumbnail: 'https://i.vimeocdn.com/video/2189964913-70fbe38a5505a216633e8dc853170a6d2205b1cf6fee3b04cf67d71cdb2ae327-d_295x166?region=us',
+  },
 };
 
-// markers that open a link in a new window
+// markers that open a link in a new window. `label` is just for the hover preview (used when
+// there's no `preview` block) — the marker still opens `url` on click, unchanged either way.
+// `preview` is a richer hover format (image + title + description), used when the destination
+// page happens to publish Open Graph tags — fetched once and hardcoded here, same idea as the
+// video thumbnails above, not a live fetch from the page itself.
 const links = {
-  spot1: 'https://www.flightradar24.com/42.69,-83.23/6',
-  spot7: 'https://www.google.com/maps?sca_esv=3e5594fd685e5dfa&biw=1567&bih=997&output=search&q=delmonico+steak+las+vegas&source=lnms&fbs=ABfTbFVyMZGZf1hfvX9uKjN_-G8c4u0nXx4bEIpwm1lnNH832f01nJrJQBh6ZiQ_SpYVjD03UDbHckLqQQtU4j8UX1eWVop2gQhTXRceTvyS_cXev2noIz2LqKyR3L1mTa0p7Oim7b4G8TzD-dztddR2LyopFd-c-pYeYB-0g9lnaQh0B9betVPbsOebU3DzqrchNHv4Mnet73i0fxc006Ic5CIn5VjHtA&entry=mc&ved=1t:200715&ictx=111',
+  spot2: { url: 'https://www.aptiv.com/en/solutions/intelligent-systems', label: 'Intelligent Systems' },
+  spot3: { url: 'http://aptiv.com', label: 'Welcome to Aptiv' },
+  spot7: {
+    url: 'https://www.aptiv.com/en/insights/article/built-for-impact-srs-connectors-trusted-in-safety-critical-applications',
+    preview: {
+      kind: 'White Paper',
+      image: 'https://www.aptiv.com/images/default-source/feature-stories/2026_aptiv_srsairbag_whitepaper_opengraph_1200x627_ship.webp?sfvrsn=2a0c4136_1',
+      title: 'Built for Impact: SRS Connectors Trusted in Safety-Critical Applications',
+      description: 'This white paper explores connector innovations addressing ESD, partial mating, mis mating, environmental stress and global standards, such as ABX 5 and AK 2.',
+    },
+  },
 };
+
+// placeholder copy while we test the header/body layout — swap for real text per marker later
+const lorem = '<h1>Lorem Ipsum Sit Amet</h1><p>Lorem ipsum dolor sit amet consectetur adipiscing elit et quas ad distinctio deleniti temporibus ipsum aute tempore sit sint et aliquip autem mollitia.</p>';
+
+// Three tooltip formats: a video marker previews its thumbnail + title, a link marker
+// previews its label + destination domain, and everything else gets the plain header/body.
+// All three still keep their click behavior (opens the video card / the link) unchanged —
+// this only changes what shows on hover, before that click.
+function previewFor(id) {
+  if (cards[id]) {
+    const c = cards[id];
+    return `<img src="${c.thumbnail}" alt=""><h1>${c.title}</h1>${c.description ? `<p>${c.description}</p>` : ''}`;
+  }
+  if (links[id]) {
+    const l = links[id];
+    if (l.preview) {
+      const kind = l.preview.kind ? `<span class="tt-kind">${l.preview.kind}</span>` : '';
+      return `${kind}<img src="${l.preview.image}" alt=""><h1>${l.preview.title}</h1><p>${l.preview.description}</p>`;
+    }
+    const site = l.site || new URL(l.url).hostname.replace(/^www\./, '');
+    return `<h1>↗ ${l.label}</h1><p>${site}</p>`;
+  }
+  return lorem;
+}
 
 const livingMarkers = [{
-    id: 'spot1',
-    position: { yaw: '282.7deg', pitch: '-4.1deg' },
+    id: 'spot1',   // Technology Adoption in India — video
+    position: { yaw: '278.8deg', pitch: '-12.0deg' },
     image: 'icons/torus.webp', size: { width: 45, height: 48 },
-    tooltip: 'Hello!',
   }, {
-    id: 'spot2',
-    position: { yaw: '223.6deg', pitch: '2.3deg' },
+    id: 'spot2',   // Intelligent Systems — outbound link
+    position: { yaw: '198.9deg', pitch: '-3.3deg' },
     image: 'icons/triangle.webp', size: { width: 45, height: 48 },
-    tooltip: 'Hola Betcita!',
   }, {
-    id: 'spot3',
-    position: { yaw: '318.0deg', pitch: '-24.8deg' },
+    id: 'spot3',   // Welcome to Aptiv — outbound link, aptiv.com
+    position: { yaw: '320.9deg', pitch: '2.6deg' },
     image: 'icons/cylinder.webp', size: { width: 45, height: 48 },
-    tooltip: 'Get back to work!',
   }, {
-    id: 'spot4',
-    position: { yaw: '261.0deg', pitch: '-42.1deg' },
+    id: 'spot4',   // El trono de la reina — plain tooltip
+    position: { yaw: '257.5deg', pitch: '-11.6deg' },
     image: 'icons/cube.webp', size: { width: 45, height: 48 },
-    tooltip: 'El trono de la reina',
   }, {
-    id: 'spot5',
-    position: { yaw: '109.7deg', pitch: '-61.5deg' },
+    id: 'spot5',   // El trono de la Rey — plain tooltip
+    position: { yaw: '101.5deg', pitch: '-5.9deg' },
     image: 'icons/pentagon.webp', size: { width: 45, height: 48 },
-    tooltip: 'El trono de la Rey',
   }, {
-    id: 'spot6',
-    position: { yaw: '178.4deg', pitch: '-27.7deg' },
+    id: 'spot6',   // En trono de la perro — video
+    position: { yaw: '141.0deg', pitch: '-3.2deg' },
     image: 'icons/torus.webp', size: { width: 45, height: 48 },
-    tooltip: 'En trono de la perro',
   }, {
-    id: 'spot7',
-    position: { yaw: '43.1deg', pitch: '-4.6deg' },
+    id: 'spot7',   // Chief Asador — outbound link
+    position: { yaw: '78.8deg', pitch: '-8.0deg' },
     image: 'icons/coins.webp', size: { width: 45, height: 48 },
-    tooltip: 'Chief Asador',
-  }].map(m => ({ ...m, tooltip: { content: m.tooltip, trigger: !cards[m.id] && !links[m.id] && matchMedia('(hover: none)').matches ? 'click' : 'hover' } }));
+  }].map(m => ({ ...m, tooltip: { content: previewFor(m.id), trigger: !cards[m.id] && !links[m.id] && matchMedia('(hover: none)').matches ? 'click' : 'hover' } }));
 
 // direction arrows, placed for now with no click action
 const arrowSvg = '<svg viewBox="0 0 100 100" width="27" height="27"><circle cx="50" cy="50" r="44" fill="#ffffff"/><path d="M28 58 L50 36 L72 58" fill="none" stroke="#111111" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const arrowMarkers = [
-  { id: 'arrow1', position: { yaw: '283.3deg', pitch: '-15.4deg' } },
-  { id: 'arrow2', position: { yaw: '208.3deg', pitch: '-18.0deg' } },
-  { id: 'arrow3', position: { yaw: '3.8deg', pitch: '-11.2deg' } },
-  { id: 'arrow4', position: { yaw: '251.3deg', pitch: '-14.3deg' } },
-  { id: 'arrow5', position: { yaw: '171.8deg', pitch: '1.9deg' } },
+  { id: 'arrow1', position: { yaw: '192.1deg', pitch: '-5.5deg' } },
+  { id: 'arrow2', position: { yaw: '140.5deg', pitch: '-13.1deg' } },
+  { id: 'arrow3', position: { yaw: '89.7deg', pitch: '-5.8deg' } },
+  { id: 'arrow4', position: { yaw: '21.0deg', pitch: '-5.9deg' } },
 ].map(m => ({ ...m, html: arrowSvg, size: { width: 27, height: 27 } }));
 
 const viewer = new Viewer({
@@ -158,7 +210,7 @@ const closeCard = () => {
 };
 viewer.getPlugin(MarkersPlugin).addEventListener('select-marker', ({ marker }) => {
   if (cards[marker.id]) openCard(cards[marker.id]);
-  if (links[marker.id]) window.open(links[marker.id], '_blank', 'noopener,noreferrer');
+  if (links[marker.id]) window.open(links[marker.id].url, '_blank', 'noopener,noreferrer');
 });
 card.addEventListener('click', e => { if (e.target === card || e.target.classList.contains('close')) closeCard(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCard(); });
