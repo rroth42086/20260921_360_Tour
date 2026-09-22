@@ -43,11 +43,18 @@
   #card p { margin: 0; font-size: 12pt; font-weight: 400; line-height: 1.4; }
   #card p:empty { display: none; }
   #card .close { position: absolute; top: -2.4em; right: 0; padding: 0.4em 0.6em; border: 0; background: none; color: #ffffff; font: 400 16pt system-ui; cursor: pointer; }
+  #map { position: fixed; right: 12px; top: 12px; width: 240px; height: 160px; background: rgba(0,0,0,0.55); border-radius: 2.64px; z-index: 10; }
+  #map-svg { width: 100%; height: 100%; }
+  #map-svg text { font-family: 'Formular', system-ui, sans-serif; font-size: 9px; fill: #fff; }
+  #map-svg .node { fill: #fff; stroke: rgba(0,0,0,0.4); stroke-width: 1; }
+  #map-svg .node.current { fill: #ff9500; }
+  #map-svg line { stroke: rgba(255,255,255,0.5); stroke-width: 1.5; }
 </style>
 </head>
 <body>
 <div id="viewer"></div>
 <div id="banner">UNDER CONSTRUCTION</div>
+<div id="map"><svg id="map-svg" viewBox="0 0 240 160"></svg></div>
 <div id="card"><div class="box">
   <button class="close" aria-label="Close">✕</button>
   <div class="video"></div>
@@ -155,6 +162,61 @@ viewer.getPlugin(MarkersPlugin).addEventListener('select-marker', ({ marker }) =
 });
 card.addEventListener('click', e => { if (e.target === card || e.target.classList.contains('close')) closeCard(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCard(); });
+
+// Map/legend inset — WIREFRAME ONLY. There's only one real photo on this page, so "Living Room" is
+// the only real node; the other five are stand-ins for wherever arrow1–arrow5 will eventually lead,
+// just to test the look of the corner inset before there's a second location to actually navigate to.
+// Also prototyping here: a background graphic behind the dots (a plain rect stands in for it — there's
+// no real floor plan yet) and click-to-place hotspots on it, the same way every marker on the panorama
+// itself was placed — click, read the logged position out of the console, hand-place it.
+// Same design as the Swift app's exporter (RR_360_Tour_Swift/Export/HTMLBuilder.swift) — tune it here,
+// then carry any changes back there, including the eventual real graphic + hotspot data.
+const mapNodes = [
+  { id: 'living', name: 'Living Room', x: 120, y: 80, current: true },
+  { id: 'placeholder-1', name: 'Location 2', x: 120, y: 25 },
+  { id: 'placeholder-2', name: 'Location 3', x: 40, y: 55 },
+  { id: 'placeholder-3', name: 'Location 4', x: 168, y: 95 },
+  { id: 'placeholder-4', name: 'Location 5', x: 58, y: 135 },
+  { id: 'placeholder-5', name: 'Location 6', x: 150, y: 140 },
+];
+const mapSvg = document.getElementById('map-svg');
+
+// stand-in for a real floor-plan graphic, drawn first so the dots/lines paint on top of it
+const mapBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+mapBg.setAttribute('x', 0); mapBg.setAttribute('y', 0);
+mapBg.setAttribute('width', 240); mapBg.setAttribute('height', 160);
+mapBg.setAttribute('fill', '#222222');
+mapBg.setAttribute('stroke', 'rgba(255,255,255,0.3)');
+mapSvg.appendChild(mapBg);
+
+mapNodes.slice(1).forEach(n => {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', mapNodes[0].x); line.setAttribute('y1', mapNodes[0].y);
+  line.setAttribute('x2', n.x); line.setAttribute('y2', n.y);
+  mapSvg.appendChild(line);
+});
+mapNodes.forEach(n => {
+  const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot.setAttribute('cx', n.x); dot.setAttribute('cy', n.y); dot.setAttribute('r', 6);
+  dot.setAttribute('class', 'node' + (n.current ? ' current' : ''));
+  mapSvg.appendChild(dot);
+  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  label.setAttribute('x', n.x + 9); label.setAttribute('y', n.y + 3);
+  label.textContent = n.name;
+  mapSvg.appendChild(label);
+});
+
+// click anywhere in the inset to log a normalized hotspot position — same idea as the
+// panorama's click-to-log-yaw/pitch above, shaped so it pastes straight into a node definition
+mapSvg.addEventListener('click', e => {
+  const pt = mapSvg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  const svgPt = pt.matrixTransform(mapSvg.getScreenCTM().inverse());
+  const vb = mapSvg.viewBox.baseVal;
+  const x = (svgPt.x - vb.x) / vb.width;
+  const y = (svgPt.y - vb.y) / vb.height;
+  console.log(`{ x: '${x.toFixed(3)}', y: '${y.toFixed(3)}' }`);
+});
 
 // banner timeline, in frames
 const FPS = 30, DROP = 9, STAGGER = 60, HOLD = 150, FADE = 30;
