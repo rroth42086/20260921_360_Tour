@@ -31,8 +31,14 @@
   /* header keeps the tooltip's existing look (Formular 400/12pt/white); body is
      deliberately smaller and dimmer so the two read as a clear hierarchy, not two
      lines of the same weight */
-  .psv-tooltip-content h1 { margin: 0 0 0.3em; font: 400 12pt 'Formular', system-ui, sans-serif; color: #ffffff; }
+  .psv-tooltip-content h1 { margin: 0 0 0.375em; font: 400 12pt 'Formular', system-ui, sans-serif; color: #ffffff; }
   .psv-tooltip-content p { margin: 0; font: 400 10pt 'Formular', system-ui, sans-serif; color: rgba(255, 255, 255, 0.65); line-height: 1.35; }
+  /* rich previews (thumbnail/OG image + title + description: video markers and link previews
+     like the White Paper and Intelligent Systems cards) get a wider box than the plain-text
+     tooltip default (200px) — sized so the White Paper title's two lines ("...Trusted in" /
+     "Safety-Critical Applications") each fit without re-wrapping; every other rich-preview
+     title is short enough to stay on one line at this width, and none should exceed it */
+  .psv-tooltip:has(.psv-tooltip-content > img) { max-width: 340px; }
   /* video preview thumbnail bleeds to the tooltip's edges rather than sitting inset by the
      content div's own padding (0.7em, matched here so the math cancels out exactly) */
   .psv-tooltip-content img { display: block; width: calc(100% + 1.4em); margin: -0.7em -0.7em 0.4em; border-radius: 2px 2px 0 0; }
@@ -109,14 +115,21 @@ const cards = {
 // page happens to publish Open Graph tags — fetched once and hardcoded here, same idea as the
 // video thumbnails above, not a live fetch from the page itself.
 const links = {
-  spot2: { url: 'https://www.aptiv.com/en/solutions/intelligent-systems', label: 'Intelligent Systems' },
+  spot2: {
+    url: 'https://www.aptiv.com/en/solutions/intelligent-systems', label: 'Intelligent Systems',
+    preview: {
+      image: 'https://www.aptiv.com/images/default-source/intelligent-systems/aptiv-com_web_intelligentsystems_og.webp?sfvrsn=894e4f36_1',
+      title: 'Intelligent Systems',
+      description: 'We bring together sensing, compute and software capabilities to enable reliable and scalable solutions.',
+    },
+  },
   spot3: { url: 'http://aptiv.com', label: 'Welcome to Aptiv' },
   spot7: {
     url: 'https://www.aptiv.com/en/insights/article/built-for-impact-srs-connectors-trusted-in-safety-critical-applications',
     preview: {
       kind: 'White Paper',
       image: 'https://www.aptiv.com/images/default-source/feature-stories/2026_aptiv_srsairbag_whitepaper_opengraph_1200x627_ship.webp?sfvrsn=2a0c4136_1',
-      title: 'Built for Impact: SRS Connectors Trusted in Safety-Critical Applications',
+      title: 'Built for Impact: SRS Connectors Trusted in<br>Safety-Critical Applications',
       description: 'This white paper explores connector innovations addressing ESD, partial mating, mis mating, environmental stress and global standards, such as ABX 5 and AK 2.',
     },
   },
