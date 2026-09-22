@@ -40,6 +40,9 @@
      flow, so the image below it keeps its left/right/bottom bleed but not its top bleed,
      or it would slide up underneath this label instead of sitting below it */
   .psv-tooltip-content .tt-kind { display: block; margin: 0 0 0.35em; font: 700 8pt 'Formular', system-ui, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+  /* arrows have no tooltip/click yet, so PSV's default marker cursor ("move") shows instead
+     of "pointer" — override it so they still read as clickable on hover */
+  .psv-marker.tour-arrow { cursor: pointer; }
   .psv-tooltip-content .tt-kind + img { margin-top: 0; }
   .psv-tooltip { background: #000000; border-radius: 2px; box-shadow: none; }
   .psv-tooltip--top-left .psv-tooltip-arrow, .psv-tooltip--top-center .psv-tooltip-arrow, .psv-tooltip--top-right .psv-tooltip-arrow { border-top-color: #000000; }
@@ -180,10 +183,11 @@ const arrowMarkers = [
   { id: 'arrow2', position: { yaw: '140.5deg', pitch: '-13.1deg' } },
   { id: 'arrow3', position: { yaw: '89.7deg', pitch: '-5.8deg' } },
   { id: 'arrow4', position: { yaw: '21.0deg', pitch: '-5.9deg' } },
-].map(m => ({ ...m, html: arrowSvg, size: { width: 27, height: 27 } }));
+].map(m => ({ ...m, html: arrowSvg, size: { width: 27, height: 27 }, className: 'tour-arrow' }));
 
 const viewer = new Viewer({
   container: 'viewer', panorama: 'photo.jpg', defaultZoomLvl: 30, navbar: false,
+  defaultYaw: '321.5deg', defaultPitch: '-2.5deg',
   plugins: [[MarkersPlugin, { markers: [...livingMarkers, ...arrowMarkers] }]],
 });
 
@@ -215,7 +219,7 @@ viewer.getPlugin(MarkersPlugin).addEventListener('select-marker', ({ marker }) =
 card.addEventListener('click', e => { if (e.target === card || e.target.classList.contains('close')) closeCard(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCard(); });
 
-// Map/legend inset — WIREFRAME ONLY. There's only one real photo on this page, so "Living Room" is
+// Map/legend inset — WIREFRAME ONLY. There's only one real photo on this page, so "Tech Theater" is
 // the only real node; the other five are stand-ins for wherever arrow1–arrow5 will eventually lead,
 // just to test the look of the corner inset before there's a second location to actually navigate to.
 // Also prototyping here: a background graphic behind the dots (a plain rect stands in for it — there's
@@ -224,7 +228,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCard();
 // Same design as the Swift app's exporter (RR_360_Tour_Swift/Export/HTMLBuilder.swift) — tune it here,
 // then carry any changes back there, including the eventual real graphic + hotspot data.
 const mapNodes = [
-  { id: 'living', name: 'Living Room', x: 120, y: 80, current: true },
+  { id: 'living', name: 'Tech Theater', x: 120, y: 80, current: true },
   { id: 'placeholder-1', name: 'Location 2', x: 120, y: 25 },
   { id: 'placeholder-2', name: 'Location 3', x: 40, y: 55 },
   { id: 'placeholder-3', name: 'Location 4', x: 168, y: 95 },
