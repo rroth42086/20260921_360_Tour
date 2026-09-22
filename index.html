@@ -32,6 +32,7 @@
      deliberately smaller and dimmer so the two read as a clear hierarchy, not two
      lines of the same weight */
   .psv-tooltip-content h1 { margin: 0 0 0.375em; font: 400 12pt 'Formular', system-ui, sans-serif; color: #ffffff; }
+  .psv-tooltip-content h1:last-child { margin-bottom: 0; }
   .psv-tooltip-content p { margin: 0; font: 400 10pt 'Formular', system-ui, sans-serif; color: rgba(255, 255, 255, 0.65); line-height: 1.35; }
   /* rich previews (thumbnail/OG image + title + description: video markers and link previews
      like the White Paper and Intelligent Systems cards) get a wider box than the plain-text
@@ -135,6 +136,15 @@ const links = {
     },
   },
   spot3: { url: 'http://aptiv.com', label: 'Welcome to Aptiv' },
+  spot4: {
+    url: 'https://www.aptiv.com/en/insights/article/beyond-detection-the-future-of-in-cabin-experiences',
+    preview: {
+      kind: 'Article',
+      image: 'https://www.aptiv.com/images/default-source/feature-stories/2026_aptiv_open-graph_1200x627.webp?sfvrsn=b05a36_1',
+      title: 'Beyond Detection: The Future of In-Cabin Experiences',
+      description: 'Software-defined vehicles are shifting the cabin into an intelligent, adaptive environment that understands occupants and responds in real time.',
+    },
+  },
   spot7: {
     url: 'https://www.aptiv.com/en/insights/article/built-for-impact-srs-connectors-trusted-in-safety-critical-applications',
     preview: {
@@ -160,12 +170,16 @@ function previewFor(id) {
   }
   if (links[id]) {
     const l = links[id];
-    if (l.preview) {
-      const kind = l.preview.kind ? `<h2>${l.preview.kind}</h2>` : '';
-      return `${kind}<img src="${l.preview.image}" alt=""><h1>${l.preview.title}</h1><p>${l.preview.description}</p>`;
-    }
     const site = l.site || new URL(l.url).hostname.replace(/^www\./, '');
-    return `<h1>↗ ${l.label}</h1><p>${site}</p>`;
+    // links into aptiv.com get an "Aptiv.com" <h2> label unless they name a more specific
+    // kind (e.g. "White Paper"); the plain format then drops its domain line, which would
+    // just repeat the label
+    const onAptiv = site === 'aptiv.com' || site.endsWith('.aptiv.com');
+    if (l.preview) {
+      const kind = l.preview.kind || (onAptiv ? 'Aptiv.com' : '');
+      return `${kind ? `<h2>${kind}</h2>` : ''}<img src="${l.preview.image}" alt=""><h1>${l.preview.title}</h1><p>${l.preview.description}</p>`;
+    }
+    return onAptiv ? `<h2>Aptiv.com</h2><h1>↗ ${l.label}</h1>` : `<h1>↗ ${l.label}</h1><p>${site}</p>`;
   }
   return lorem;
 }
@@ -183,7 +197,7 @@ const livingMarkers = [{
     position: { yaw: '320.9deg', pitch: '2.6deg' },
     image: 'icons/cylinder.webp', size: { width: 45, height: 48 },
   }, {
-    id: 'spot4',   // El trono de la reina — plain tooltip
+    id: 'spot4',   // Beyond Detection: The Future of In-Cabin Experiences — outbound link, article
     position: { yaw: '257.5deg', pitch: '-11.6deg' },
     image: 'icons/cube.webp', size: { width: 45, height: 48 },
   }, {
