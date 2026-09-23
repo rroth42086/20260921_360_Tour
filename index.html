@@ -163,6 +163,7 @@ const links = {
   },
   spot4: {
     url: 'https://rroth42086.github.io/20260923_360_Tour/',
+    sameTab: true,   // another tour: walk through in this tab, like the Volvo's arrow back
     preview: {
       kind: '360 Tour',
       image: 'tour_preview.jpg',
@@ -277,9 +278,11 @@ const closeCard = () => {
   card.classList.remove('open');
   card.querySelector('.video').replaceChildren();   // removing the iframe stops playback
 };
+// links open in a new tab, except `sameTab` ones (other tours), which navigate this tab
+const openLink = l => l.sameTab ? (window.location.href = l.url) : window.open(l.url, '_blank', 'noopener,noreferrer');
 viewer.getPlugin(MarkersPlugin).addEventListener('select-marker', ({ marker }) => {
   if (cards[marker.id]) openCard(cards[marker.id]);
-  if (links[marker.id]) window.open(links[marker.id].url, '_blank', 'noopener,noreferrer');
+  if (links[marker.id]) openLink(links[marker.id]);
 });
 card.addEventListener('click', e => { if (e.target === card || e.target.classList.contains('close')) closeCard(); });
 
@@ -294,7 +297,7 @@ const HIDE_GRACE = 300;
 const markersPlugin = viewer.getPlugin(MarkersPlugin);
 const selectMarker = id => {
   if (cards[id]) openCard(cards[id]);
-  if (links[id]) window.open(links[id].url, '_blank', 'noopener,noreferrer');
+  if (links[id]) openLink(links[id]);
 };
 // markers only exist once the panorama has loaded, hence waiting for 'ready'
 viewer.addEventListener('ready', () => livingMarkers.filter(m => m.tooltip.trigger === 'hover').forEach(({ id }) => {
