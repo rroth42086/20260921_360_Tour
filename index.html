@@ -196,7 +196,7 @@ function previewFor(id) {
   }
   if (links[id]) {
     const l = links[id];
-    const site = l.site || new URL(l.url).hostname.replace(/^www\./, '');
+    const site = l.site || new URL(l.url, location.href).hostname.replace(/^www\./, '');
     // links into aptiv.com get an "Aptiv.com" <h2> label unless they name a more specific
     // kind (e.g. "White Paper"); the plain format then drops its domain line, which would
     // just repeat the label
